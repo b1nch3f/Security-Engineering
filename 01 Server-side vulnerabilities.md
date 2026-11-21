@@ -1,0 +1,52 @@
+- path traversal
+  - using ../../etc/passwd to find usernames
+- access control 
+  - guess path -> access it un-authenticated
+  - security by obscurity -> use javascript for injecting the url via manipulating href
+  - vertical access control bypass -> security controls by manipulating http headers or places where something can be stored which is used for access control, e.g., hidden fields, or cookie, etc
+  - horizontal access control bypass -> find other user's id, guuid, etc and try to hit them from another user
+  - horizontal to vertical also possible
+- authentication
+  - authn -> they're who they say they are
+  - authz -> they've the access they should have
+  - brute-force attacks -> have mechanism to prevent it, maybe slow it down
+  - brute-forcing usernames -> find sensitive accounts, e.g., administrator, it-support, etc, even non-sensitive ones could be used for phishing, e.g., initiate insider-threat
+  - brute-forcing passwords ->
+    - usually sites force users for high-entropy passwords that are harder to crack using brute-force alone
+      - but it's hard for users to remember it, so if they were to set something like Password1, they'd do it as Password!1 just so the system allows them to use it
+      - so, attacker would do more-sophisticated password generation based on knowledge of how the password setup behaves along with how users behave
+      - the system could also enforce changing of passwords in a certain number of days
+    - username enumeration - observe how the response to enumerate usernames during login attempts
+    - bypass 2fa - when user has logged in but not provided the verification code yet
+      - they're in a logged in state, occasionally if it's possible to access other resources without needed the code
+- SSRF
+  - control flow hijacking of the server-side application, tricking it to do things like sending request to internal/external systems to retreive/leak sensitive data
+  - if the internal url can be manipulated via the headers
+    - they'd do this to maybe reset admin passwords if they lose
+    - sometimes need to enumerate what's the internal url if it accept IP addresses
+- File Upload Vulnerabilities
+  - when server allows to upload arbitrary files without checking type, size, etc
+    - even server side files leading to RCE
+    - sometimes even the upload itself could be dangerous to trigger it's execution without a follow-up http request
+    - can lead to web shells to take full control of the web server
+    - file type validation
+      - application/x-www-form-urlencoded, multipart/form-data
+- OS command injection
+  - it's possible that a legacy systems runs scripts with arguments to fetch certain details
+    - those arguments can be manipulated by the attacker usually by placing an `&` character or a `|` before the injected command
+- SQL injection
+  - allows an attacker to interfere with queries that application can makes to it's database to cause various havocs
+  - test if the application is vulnerable using character/strings such as `'`, `OR 1=1`, `OR 1=2`, etc and look for responses
+    - this `OR 1=1` could lead to data loss if the underlying query get triggered with it's `UPDATE` or `DELETE` statements if any 
+  - a `--` is for comment in sql, use this to bypass any checks in the underlying sql
+    - https://insecure-website.com/products?category=Gifts'--
+      - `SELECT * FROM products WHERE category = 'Gifts'--' AND released = 1`
+    - https://insecure-website.com/products?category=Gifts'+OR+1=1--
+      - `SELECT * FROM products WHERE category = 'Gifts' OR 1=1--' AND released = 1` 
+  - sometimes use time-delay queries to establish the injected query ran
+  - can also use OAST payloads to trigger network interactions
+  - can also find such vulnerabilities quickly and reliably via Burp Suite Scanner
+  - use-case
+    - login as any user
+      - normal case -> `SELECT * FROM users WHERE username = 'wiener' AND password = 'bluecheese'`
+      - attack case -> `SELECT * FROM users WHERE username = 'administrator'--' AND password = ''` by submitting the username as `administrator'--`
